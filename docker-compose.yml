@@ -1,0 +1,129 @@
+version: '3.3'
+services:
+
+
+  # traefik-reverse-proxy:
+  #   container_name: traefik
+  #   image: traefik:v2.2.1
+  #   command:
+  #     - --api=true
+  #     - --api.dashboard=true
+  #     - --entrypoints.web.address=:80
+  #     - --entrypoints.websecure.address=:443
+  #     - --entrypoints.websecure.http.tls.domains[0].main=$TRAEFIK_BASE_DNS
+  #     - --entrypoints.websecure.http.tls.domains[0].sans=*.$TRAEFIK_BASE_DNS
+  #     - --certificatesresolvers.cloudflare.acme.email=$TRAEFIK_ACME_EMAIL
+  #     - --certificatesresolvers.cloudflare.acme.dnschallenge=true
+  #     - --certificatesresolvers.cloudflare.acme.dnschallenge.delaybeforecheck=0
+  #     - --certificatesresolvers.cloudflare.acme.dnschallenge.provider=cloudflare
+  #     - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers[0]=1.1.1.1:53
+  #     - --certificatesresolvers.cloudflare.acme.dnschallenge.resolvers[1]=8.8.8.8:53
+  #     - --certificatesresolvers.cloudflare.acme.caServer=$TRAEFIK_ACME_CASERVER
+  #     - --certificatesresolvers.cloudflare.acme.storage=/acme.json
+  #     - --api.debug=$TRAEFIK_DEBUG
+  #     - --log=$TRAEFIK_LOG
+  #     - --log.level=ERROR
+  #     - --providers.docker=true
+  #     - --providers.docker.exposedbydefault=false
+  #     - --providers.docker.network=web
+  #   restart: unless-stopped
+  #   networks:
+  #     - internal
+  #   ports:
+  #     - '80:80'
+  #     - '443:443'
+  #   expose:
+  #       - 8080
+  #       - 3000
+  #   labels:
+  #     - traefik.enable=true
+  #     - traefik.network=internal
+  #     - traefik.port=8080
+  #     - traefik.http.routers.traefik.service=api@internal
+  #     - traefik.http.routers.traefik.rule=Host(`$TRAEFIK_DASHBOARD_HOST`)
+  #     - traefik.http.routers.traefik.middlewares=traefik-auth
+  #     - traefik.http.middlewares.traefik-auth.basicauth.users=$TRAEFIK_USER_PASS
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock:ro
+  #     - /opt/traefik/acme.json:/acme.json
+  #   environment:
+  #     - CLOUDFLARE_EMAIL=$CLOUDFLARE_EMAIL
+  #     - CLOUDFLARE_API_KEY=$CLOUDFLARE_API_KEY
+
+
+  traefik:
+    image: "traefik:v2.5"
+    container_name: "traefik"
+    command:
+      #- "--log.level=DEBUG"
+      - "--api.insecure=true" # dashboard on 8080
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80" # open the port 80 and name it web
+    ports:
+      - "80:80" # expose 80 on 80 (web entrypoint)
+      - "8080:8080" # expose 8080 on 8080 (dashboard)
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+
+  hello:
+    image: shubhag/hello-world-node
+    container_name: "hello-world-node"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hello.rule=Host(`hello.$APP_HOST`)"
+      - "traefik.http.routers.hello.entrypoints=web"
+      # - "traefik.http.services.hello.loadbalancer.server.port=8080" # not needed as traefik will detect it as the only open port
+    ports:
+      - '8888:8080' #expose 8888 and make it talk to 8080 on that service, (bypass traefik)
+
+  whoami:
+    image: "traefik/whoami"
+    container_name: "whoami"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami.$APP_HOST`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+
+#   graph-node:
+#     image: graphprotocol/graph-node
+#     ports:
+#       - '8000:8000'
+#       - '8001:8001'
+#       - '8020:8020'
+#       - '8030:8030'
+#       - '8040:8040'
+#     depends_on:
+#       - ipfs
+#       - postgres
+#     environment:
+#       postgres_host: postgres
+#       postgres_user: graph-node
+#       postgres_pass: let-me-in
+#       postgres_db: graph-node
+#       ipfs: 'ipfs:5001'
+#     #   ethereum: 'mainnet:http://host.docker.internal:8545'
+#       ethereum: 'goerli:https://eth-goerli.alchemyapi.io/v2/zn8Q6SPEPmpWIiZnbnXXNgRxDCrkybJp'
+#       GRAPH_LOG: info
+
+# #   graph-node-query:
+
+#   ipfs:
+#     image: ipfs/go-ipfs:v0.4.23
+#     ports:
+#       - '5001:5001'
+#     volumes:
+#       - ./data/ipfs:/data/ipfs
+
+#   postgres:
+#     image: postgres
+#     ports:
+#       - '5432:5432'
+#     command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
+#     environment:
+#       POSTGRES_USER: graph-node
+#       POSTGRES_PASSWORD: let-me-in
+#       POSTGRES_DB: graph-node
+#     volumes:
+#       - ./data/postgres:/var/lib/postgresql/data
+
