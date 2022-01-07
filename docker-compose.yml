@@ -10,6 +10,12 @@ services:
     container_name: "traefik"
     command:
       # - "--log.level=DEBUG"
+      # - "--accesslog=true"
+      # - "--accesslog.filters.statuscodes=404"
+      # - "--accesslog.filepath=${DATA_PATH:-.}/data/$APP_HOST/logs/access.log"
+      # - "--accesslog.bufferingsize=0"
+      # - "--accesslog.format=json"
+      # - "--accesslog.fields.headers.defaultmode=keep"
       # - "--api.insecure=true" # dashboard on 8080
 
       # docker
@@ -41,6 +47,9 @@ services:
       # Enable dashboard
       - "--api.dashboard=true"
 
+      # enable traefik pilot
+      - "--pilot.token=${TRAEFIK_PILOT}"
+
     labels:
       - "traefik.enable=true"
 
@@ -70,15 +79,15 @@ services:
       - "${DATA_PATH:-.}/data/$APP_HOST/letsencrypt:/letsencrypt"
 
 
-  whoami:
-    image: "traefik/whoami"
-    container_name: "whoami"
-    labels:
-      - "traefik.enable=true"
+  # whoami:
+  #   image: "traefik/whoami"
+  #   container_name: "whoami"
+  #   labels:
+  #     - "traefik.enable=true"
 
-      - "traefik.http.routers.whoami.entrypoints=websecure"
-      - "traefik.http.routers.whoami.rule=Host(`whoami${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
-      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
+  #     - "traefik.http.routers.whoami.entrypoints=websecure"
+  #     - "traefik.http.routers.whoami.rule=Host(`whoami${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+  #     - "traefik.http.routers.whoami.tls.certresolver=myresolver"
 
 
   graph-node:
@@ -94,7 +103,8 @@ services:
       - "traefik.http.services.graph-node.loadbalancer.server.port=8000"
 
       - "traefik.http.routers.graph-node-api.entrypoints=websecure"
-      - "traefik.http.routers.graph-node-api.rule=Host(`api${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+      # hide POST method require bearer token
+      - "traefik.http.routers.graph-node-api.rule=Host(`api${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`) && (Headers(`Authorization`, `Bearer ${GRAPH_API_AUTH_TOKEN}`) || !Method(`POST`))"
       - "traefik.http.routers.graph-node-api.tls.certresolver=myresolver"
       - "traefik.http.routers.graph-node-api.service=graph-node-api"
       - "traefik.http.services.graph-node-api.loadbalancer.server.port=8020"
@@ -124,25 +134,35 @@ services:
     labels:
       - "traefik.enable=true"
 
+      # - "traefik.http.routers.ipfs-api.entrypoints=websecure"
+      # - "traefik.http.routers.ipfs-api.rule=Host(`ipfs-api${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+      # - "traefik.http.routers.ipfs-api.tls.certresolver=myresolver"
+      # - "traefik.http.routers.ipfs-api.service=ipfs-api"
+      # - "traefik.http.services.ipfs-api.loadbalancer.server.port=5001"
+
       - "traefik.http.routers.ipfs.entrypoints=websecure"
       - "traefik.http.routers.ipfs.rule=Host(`ipfs${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
       - "traefik.http.routers.ipfs.tls.certresolver=myresolver"
-      - "traefik.http.services.ipfs.loadbalancer.server.port=5001"
+      - "traefik.http.routers.ipfs.service=ipfs"
+      - "traefik.http.services.ipfs.loadbalancer.server.port=8080"
     # ports:
     #   - '5001:5001'
+    #   - '8080:8080'
+    #   - '8081:8081'
+    #   - '4001:4001'
     volumes:
       - "${DATA_PATH:-.}/data/$APP_HOST/ipfs:/data/ipfs"
 
   postgres:
     image: postgres
     container_name: "postgres"
-    labels:
-      - "traefik.enable=true"
+    # labels:
+    #   - "traefik.enable=true"
 
-      - "traefik.http.routers.postgres.entrypoints=websecure"
-      - "traefik.http.routers.postgres.rule=Host(`postgres${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
-      - "traefik.http.routers.postgres.tls.certresolver=myresolver"
-      - "traefik.http.services.postgres.loadbalancer.server.port=5432"
+    #   - "traefik.http.routers.postgres.entrypoints=websecure"
+    #   - "traefik.http.routers.postgres.rule=Host(`postgres${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+    #   - "traefik.http.routers.postgres.tls.certresolver=myresolver"
+    #   - "traefik.http.services.postgres.loadbalancer.server.port=5432"
     # ports:
     #   - '5432:5432'
     command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
