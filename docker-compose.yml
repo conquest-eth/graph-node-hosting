@@ -60,7 +60,7 @@ services:
     image: "traefik:v2.5"
     container_name: "traefik"
     command:
-      #- "--log.level=DEBUG"
+      - "--log.level=DEBUG"
       - "--api.insecure=true" # dashboard on 8080
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
@@ -74,7 +74,7 @@ services:
       - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
 
       # staging env to test
-      - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 
       # The email to provide to let's encrypt
       - "--certificatesresolvers.myresolver.acme.email=$LETS_ENCRYPT_EMAIL"
@@ -102,7 +102,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.hello.rule=Host(`hello.$APP_HOST`)"
-      - "traefik.http.routers.hello.entrypoints=web"
+      - "traefik.http.routers.hello.entrypoints=websecure"
       # - "traefik.http.services.hello.loadbalancer.server.port=8080" # not needed as traefik will detect it as the only open port
 
       - "traefik.http.routers.hello.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
@@ -115,7 +115,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.whoami.rule=Host(`whoami.$APP_HOST`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
 
       - "traefik.http.routers.whoami.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
 
@@ -125,7 +125,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.test.rule=Host(`$APP_HOST`)"
-      - "traefik.http.routers.test.entrypoints=web"
+      - "traefik.http.routers.test.entrypoints=websecure"
 
       - "traefik.http.routers.test.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
 
