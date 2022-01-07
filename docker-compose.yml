@@ -88,9 +88,16 @@ services:
       - "traefik.enable=true"
 
       - "traefik.http.routers.graph-node.entrypoints=websecure"
-      - "traefik.http.routers.graph-node.rule=Host(`$APP_HOST`)"
+      - "traefik.http.routers.graph-node.rule=Host(`${APP_HOST}`)"
       - "traefik.http.routers.graph-node.tls.certresolver=myresolver"
+      - "traefik.http.routers.graph-node.service=graph-node"
       - "traefik.http.services.graph-node.loadbalancer.server.port=8000"
+
+      - "traefik.http.routers.graph-node-api.entrypoints=websecure"
+      - "traefik.http.routers.graph-node-api.rule=Host(`api${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+      - "traefik.http.routers.graph-node-api.tls.certresolver=myresolver"
+      - "traefik.http.routers.graph-node-api.service=graph-node-api"
+      - "traefik.http.services.graph-node-api.loadbalancer.server.port=8020"
     # ports:
     #   - '8000:8000'
     #   - '8001:8001'
