@@ -67,21 +67,8 @@ services:
 
       # Create a letsencrypt dir within the folder where the docker-compose file is
       # DATA_PATH is needed when used in remote with --context
-      - "${DATA_PATH:-.}/letsencrypt/$APP_HOST:/letsencrypt"
+      - "${DATA_PATH:-.}/data/$APP_HOST/letsencrypt:/letsencrypt"
 
-  hello:
-    image: shubhag/hello-world-node
-    container_name: "hello-world-node"
-    labels:
-      - "traefik.enable=true"
-
-      - "traefik.http.routers.hello.entrypoints=websecure"
-      - "traefik.http.routers.hello.rule=Host(`hello${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
-      - "traefik.http.routers.hello.tls.certresolver=myresolver"
-
-      # - "traefik.http.services.hello.loadbalancer.server.port=8080" # not needed as traefik will detect it as the only open port
-    # ports:
-      # - '8888:8080' #expose 8888 and make it talk to 8080 on that service, (bypass traefik)
 
   whoami:
     image: "traefik/whoami"
@@ -93,56 +80,69 @@ services:
       - "traefik.http.routers.whoami.rule=Host(`whoami${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
       - "traefik.http.routers.whoami.tls.certresolver=myresolver"
 
-  test:
-    image: "traefik/whoami"
-    container_name: "test"
+
+  graph-node:
+    image: graphprotocol/graph-node
+    container_name: "graph-node"
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.test.entrypoints=websecure"
-      - "traefik.http.routers.test.rule=Host(`$APP_HOST`)"
-      - "traefik.http.routers.test.tls.certresolver=myresolver"
-
-
-#   graph-node:
-#     image: graphprotocol/graph-node
-#     ports:
-#       - '8000:8000'
-#       - '8001:8001'
-#       - '8020:8020'
-#       - '8030:8030'
-#       - '8040:8040'
-#     depends_on:
-#       - ipfs
-#       - postgres
-#     environment:
-#       postgres_host: postgres
-#       postgres_user: graph-node
-#       postgres_pass: let-me-in
-#       postgres_db: graph-node
-#       ipfs: 'ipfs:5001'
-#     #   ethereum: 'mainnet:http://host.docker.internal:8545'
-#       ethereum: 'goerli:https://eth-goerli.alchemyapi.io/v2/zn8Q6SPEPmpWIiZnbnXXNgRxDCrkybJp'
-#       GRAPH_LOG: info
+      - "traefik.http.routers.graph-node.entrypoints=websecure"
+      - "traefik.http.routers.graph-node.rule=Host(`$APP_HOST`)"
+      - "traefik.http.routers.graph-node.tls.certresolver=myresolver"
+      - "traefik.http.services.graph-node.loadbalancer.server.port=8000"
+    # ports:
+    #   - '8000:8000'
+    #   - '8001:8001'
+    #   - '8020:8020'
+    #   - '8030:8030'
+    #   - '8040:8040'
+    depends_on:
+      - ipfs
+      - postgres
+    environment:
+      postgres_host: postgres
+      postgres_user: graph-node
+      postgres_pass: let-me-in
+      postgres_db: graph-node
+      ipfs: 'ipfs:5001'
+      ethereum: '${ETHEREUM_NETWORK}:${ETHEREUM_NODE}'
+      GRAPH_LOG: info
 
 # #   graph-node-query:
 
-#   ipfs:
-#     image: ipfs/go-ipfs:v0.4.23
-#     ports:
-#       - '5001:5001'
-#     volumes:
-#       - ./data/ipfs:/data/ipfs
+  ipfs:
+    image: ipfs/go-ipfs:v0.4.23
+    container_name: "ipfs"
+    labels:
+      - "traefik.enable=true"
 
-#   postgres:
-#     image: postgres
-#     ports:
-#       - '5432:5432'
-#     command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
-#     environment:
-#       POSTGRES_USER: graph-node
-#       POSTGRES_PASSWORD: let-me-in
-#       POSTGRES_DB: graph-node
-#     volumes:
-#       - ./data/postgres:/var/lib/postgresql/data
+      - "traefik.http.routers.ipfs.entrypoints=websecure"
+      - "traefik.http.routers.ipfs.rule=Host(`ipfs${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+      - "traefik.http.routers.ipfs.tls.certresolver=myresolver"
+      - "traefik.http.services.ipfs.loadbalancer.server.port=5001"
+    # ports:
+    #   - '5001:5001'
+    volumes:
+      - "${DATA_PATH:-.}/data/$APP_HOST/ipfs:/data/ipfs"
+
+  postgres:
+    image: postgres
+    container_name: "postgres"
+    labels:
+      - "traefik.enable=true"
+
+      - "traefik.http.routers.postgres.entrypoints=websecure"
+      - "traefik.http.routers.postgres.rule=Host(`postgres${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+      - "traefik.http.routers.postgres.tls.certresolver=myresolver"
+      - "traefik.http.services.postgres.loadbalancer.server.port=5432"
+    # ports:
+    #   - '5432:5432'
+    command: ["postgres", "-cshared_preload_libraries=pg_stat_statements"]
+    environment:
+      POSTGRES_USER: graph-node
+      POSTGRES_PASSWORD: let-me-in
+      POSTGRES_DB: graph-node
+    volumes:
+      -  "${DATA_PATH:-.}/data/$APP_HOST/postgres:/var/lib/postgresql/data"
 
