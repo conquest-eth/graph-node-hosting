@@ -82,6 +82,18 @@ services:
       # Tell to store the certificate on a path under our volume
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
 
+    labels:
+      # http redirect to https
+      ## define https redirect middleware
+      - "traefik.http.middlewares.redirect_to_https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect_to_https.redirectscheme.permanent=true"
+      ## use middleware
+      - "traefik.enable=true"
+      - "traefik.http.routers.http-catchall.rule=hostregexp(`{host:.+}`)"
+      - "traefik.http.routers.http-catchall.entrypoints=web"
+      - "traefik.http.routers.http-catchall.middlewares=redirect_to_https"
+
+
     ports:
       - "80:80" # expose 80 on 80 (web entrypoint)
       - "443:443" # expose 443 on 443 (websecure entrypoint)
@@ -125,19 +137,10 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # https
       - "traefik.http.routers.test.entrypoints=websecure"
       - "traefik.http.routers.test.rule=Host(`$APP_HOST`)"
       - "traefik.http.routers.test.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
 
-      # http redirect to https
-      ## define https redirect middleware
-      - "traefik.http.middlewares.redirect_to_https.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.redirect_to_https.redirectscheme.permanent=true"
-      ## use middleware
-      - "traefik.http.routers.test_http.entrypoints=web"
-      - "traefik.http.routers.test_http.rule=Host(`$APP_HOST`)"
-      - "traefik.http.routers.test_http.middlewares=redirect_to_https"
 
 #   graph-node:
 #     image: graphprotocol/graph-node
