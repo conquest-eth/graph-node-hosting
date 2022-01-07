@@ -124,10 +124,20 @@ services:
     container_name: "test"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.test.rule=Host(`$APP_HOST`)"
-      - "traefik.http.routers.test.entrypoints=websecure"
 
+      # https
+      - "traefik.http.routers.test.entrypoints=websecure"
+      - "traefik.http.routers.test.rule=Host(`$APP_HOST`)"
       - "traefik.http.routers.test.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
+
+      # http redirect to https
+      ## define https redirect middleware
+      - "traefik.http.middlewares.redirect_to_https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect_to_https.redirectscheme.permanent=true"
+      ## use middleware
+      - "traefik.http.routers.test_http.entrypoints=web"
+      - "traefik.http.routers.test_http.rule=Host(`$APP_HOST`)"
+      - "traefik.http.routers.test_http.middlewares=redirect_to_https"
 
 #   graph-node:
 #     image: graphprotocol/graph-node
