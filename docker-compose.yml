@@ -45,7 +45,7 @@ services:
       - "traefik.enable=true"
 
       - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.rule=Host(`traefik.$APP_HOST`)"
+      - "traefik.http.routers.traefik.rule=Host(`traefik${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
       - "traefik.http.routers.traefik.tls.certresolver=myresolver"
 
@@ -67,7 +67,7 @@ services:
 
       # Create a letsencrypt dir within the folder where the docker-compose file is
       # DATA_PATH is needed when used in remote with --context
-      - "${DATA_PATH}/letsencrypt/$APP_HOST:/letsencrypt"
+      - "${DATA_PATH:-.}/letsencrypt/$APP_HOST:/letsencrypt"
 
   hello:
     image: shubhag/hello-world-node
@@ -76,7 +76,7 @@ services:
       - "traefik.enable=true"
 
       - "traefik.http.routers.hello.entrypoints=websecure"
-      - "traefik.http.routers.hello.rule=Host(`hello.$APP_HOST`)"
+      - "traefik.http.routers.hello.rule=Host(`hello${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
       - "traefik.http.routers.hello.tls.certresolver=myresolver"
 
       # - "traefik.http.services.hello.loadbalancer.server.port=8080" # not needed as traefik will detect it as the only open port
@@ -90,7 +90,7 @@ services:
       - "traefik.enable=true"
 
       - "traefik.http.routers.whoami.entrypoints=websecure"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.$APP_HOST`)"
+      - "traefik.http.routers.whoami.rule=Host(`whoami${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
       - "traefik.http.routers.whoami.tls.certresolver=myresolver"
 
   test:
