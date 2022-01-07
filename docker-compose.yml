@@ -119,6 +119,16 @@ services:
 
       - "traefik.http.routers.whoami.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
 
+  test:
+    image: "traefik/whoami"
+    container_name: "test"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.test.rule=Host(`$APP_HOST`)"
+      - "traefik.http.routers.test.entrypoints=web"
+
+      - "traefik.http.routers.test.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
+
 #   graph-node:
 #     image: graphprotocol/graph-node
 #     ports:
