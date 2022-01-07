@@ -20,19 +20,19 @@ services:
       - "--entrypoints.web.address=:80" # open the port 80 and name it web (http)
       - "--entrypoints.websecure.address=:443" # open the port 443 and name it websecure (https)
 
-      # Enable a dns challenge named "myresolver"
-      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      # Enable a dns challenge named "letsencrypt_resolver"
+      - "--certificatesresolvers.letsencrypt_resolver.acme.dnschallenge=true"
       # Tell which provider to use
-      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=cloudflare"
+      - "--certificatesresolvers.letsencrypt_resolver.acme.dnschallenge.provider=cloudflare"
 
       # staging env to test
-      #- "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      #- "--certificatesresolvers.letsencrypt_resolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
 
       # The email to provide to let's encrypt
-      - "--certificatesresolvers.myresolver.acme.email=$LETS_ENCRYPT_EMAIL"
+      - "--certificatesresolvers.letsencrypt_resolver.acme.email=$LETS_ENCRYPT_EMAIL"
 
       # Tell to store the certificate on a path under our volume
-      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
+      - "--certificatesresolvers.letsencrypt_resolver.acme.storage=/letsencrypt/acme.json"
 
       # redirect to https
       - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
@@ -47,9 +47,12 @@ services:
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.rule=Host(`traefik.$APP_HOST`)"
       - "traefik.http.routers.traefik.entrypoints=websecure"
-      - "traefik.http.routers.traefik.tls.certresolver=myresolver"
+      - "traefik.http.routers.traefik.tls.certresolver=letsencrypt_resolver"
+
+      # add authentication
       - "traefik.http.routers.traefik.middlewares=traefik-auth"
       - "traefik.http.middlewares.traefik-auth.basicauth.users=$BASIC_AUTHENTICATION"
+
 
     ports:
       - "80:80" # expose 80 on 80 (web entrypoint)
@@ -69,9 +72,10 @@ services:
     container_name: "hello-world-node"
     labels:
       - "traefik.enable=true"
+    
       - "traefik.http.routers.hello.entrypoints=websecure"
       - "traefik.http.routers.hello.rule=Host(`hello.$APP_HOST`)"
-      - "traefik.http.routers.hello.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
+      - "traefik.http.routers.hello.tls.certresolver=letsencrypt_resolver"
 
       # - "traefik.http.services.hello.loadbalancer.server.port=8080" # not needed as traefik will detect it as the only open port
     # ports:
@@ -82,18 +86,20 @@ services:
     container_name: "whoami"
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.test.entrypoints=websecure"
+
+      - "traefik.http.routers.whoami.entrypoints=websecure"
       - "traefik.http.routers.whoami.rule=Host(`whoami.$APP_HOST`)"
-      - "traefik.http.routers.whoami.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
+      - "traefik.http.routers.whoami.tls.certresolver=letsencrypt_resolver"
 
   test:
     image: "traefik/whoami"
     container_name: "test"
     labels:
       - "traefik.enable=true"
+
       - "traefik.http.routers.test.entrypoints=websecure"
       - "traefik.http.routers.test.rule=Host(`$APP_HOST`)"
-      - "traefik.http.routers.test.tls.certresolver=myresolver" # Uses the Host rule to define which certificate to issue
+      - "traefik.http.routers.test.tls.certresolver=letsencrypt_resolver"
 
 
 #   graph-node:
