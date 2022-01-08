@@ -9,9 +9,12 @@ services:
     image: "traefik:v2.5"
     container_name: "traefik"
     command:
+      - "--providers.file.directory=/traefik_conf.d"
+
       # - "--log.level=DEBUG"
       # - "--accesslog=true"
-      # - "--accesslog.filters.statuscodes=404"
+      # - "--accesslog.filters.statuscodes=403"
+      # - "--accesslog.filters.statuscodes=400-600"
       # - "--accesslog.filepath=${DATA_PATH:-.}/data/$APP_HOST/logs/access.log"
       # - "--accesslog.bufferingsize=0"
       # - "--accesslog.format=json"
@@ -78,6 +81,8 @@ services:
       # DATA_PATH is needed when used in remote with --context
       - "${DATA_PATH:-.}/data/$APP_HOST/letsencrypt:/letsencrypt"
 
+      - "./traefik_conf.yaml:/traefik_conf.d/traefik_conf.yaml:ro"
+
 
   # whoami:
   #   image: "traefik/whoami"
@@ -96,11 +101,18 @@ services:
     labels:
       - "traefik.enable=true"
 
-      - "traefik.http.routers.graph-node.entrypoints=websecure"
-      - "traefik.http.routers.graph-node.rule=Host(`${APP_HOST}`)"
-      - "traefik.http.routers.graph-node.tls.certresolver=myresolver"
-      - "traefik.http.routers.graph-node.service=graph-node"
-      - "traefik.http.services.graph-node.loadbalancer.server.port=8000"
+      # moved in traefik_conf.yml:
+      # - "traefik.http.routers.graph-node.entrypoints=websecure"
+      # - "traefik.http.routers.graph-node.rule=Host(`${APP_HOST}`)"
+      # - "traefik.http.routers.graph-node.tls.certresolver=myresolver"
+      # - "traefik.http.routers.graph-node.service=graph-node@file"
+      # # - "traefik.http.services.graph-node.loadbalancer.server.port=8000" // see traefik_conf.yml
+      # instead add it as a subdomain (or prefix-domain):
+      - "traefik.http.routers.graph-node-graphql.entrypoints=websecure"
+      - "traefik.http.routers.graph-node-graphql.rule=Host(`graph-node${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+      - "traefik.http.routers.graph-node-graphql.tls.certresolver=myresolver"
+      - "traefik.http.routers.graph-node-graphql.service=graph-node-graphql"
+      - "traefik.http.services.graph-node-graphql.loadbalancer.server.port=8000"
 
       - "traefik.http.routers.graph-node-api.entrypoints=websecure"
       # hide POST method require bearer token
@@ -108,8 +120,8 @@ services:
       - "traefik.http.routers.graph-node-api.tls.certresolver=myresolver"
       - "traefik.http.routers.graph-node-api.service=graph-node-api"
       - "traefik.http.services.graph-node-api.loadbalancer.server.port=8020"
-    # ports:
-    #   - '8000:8000'
+    ports:
+      - '8000:8000' # expose so loadbalancer can talk to it, see traefik_conf.yaml
     #   - '8001:8001'
     #   - '8020:8020'
     #   - '8030:8030'

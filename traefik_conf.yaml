@@ -1,0 +1,20 @@
+http:
+  routers:
+    graph-node:
+      # TODO configure to use APP_HOST
+      rule: "Host(`subgraphs.etherplay.io`)"
+      service: "graph-node"
+      entrypoints:
+        - "websecure"
+      tls:
+        certresolver: "myresolver" #defined in static config (Commands in docker-compose)
+  services:
+    graph-node:
+      loadBalancer:
+        healthCheck:
+          # TODO configure to use subgraph name or path
+          path: /subgraphs/name/conquest-eth/conquest-pre-alpha
+        passHostHeader: false
+        servers:
+        - url: "http://graph-node:8000"
+        - url: "https://api.thegraph.com"
