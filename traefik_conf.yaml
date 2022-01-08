@@ -11,6 +11,8 @@ http:
   services:
     graph-node:
       loadBalancer:
+        sticky:
+         cookie: {}
         healthCheck:
           # TODO configure to use subgraph name or path
           path: /subgraphs/name/conquest-eth/conquest-pre-alpha
