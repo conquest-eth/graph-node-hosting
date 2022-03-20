@@ -114,6 +114,15 @@ services:
       - "traefik.http.routers.graph-node-graphql.service=graph-node-graphql"
       - "traefik.http.services.graph-node-graphql.loadbalancer.server.port=8000"
 
+      - "traefik.http.routers.graph-index-node-graphql.entrypoints=websecure"
+      - "traefik.http.routers.graph-index-node-graphql.rule=Host(`graph-node${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`) && Path(`/index-node/graphql`)"
+      - "traefik.http.routers.graph-index-node-graphql.tls.certresolver=myresolver"
+      - "traefik.http.routers.graph-index-node-graphql.service=graph-index-node-graphql"
+      - "traefik.http.services.graph-index-node-graphql.loadbalancer.server.port=8030"
+      # strip /index-node
+      - "traefik.http.routers.graph-index-node-graphql.middlewares=strip-index-node"
+      - "traefik.http.middlewares.strip-index-node.stripprefix.prefixes=/index-node"
+
       - "traefik.http.routers.graph-node-api.entrypoints=websecure"
       # hide POST method require bearer token
       - "traefik.http.routers.graph-node-api.rule=Host(`api${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`) && (Headers(`Authorization`, `Bearer ${GRAPH_API_AUTH_TOKEN}`) || !Method(`POST`))"
@@ -146,11 +155,11 @@ services:
     labels:
       - "traefik.enable=true"
 
-      # - "traefik.http.routers.ipfs-api.entrypoints=websecure"
-      # - "traefik.http.routers.ipfs-api.rule=Host(`ipfs-api${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
-      # - "traefik.http.routers.ipfs-api.tls.certresolver=myresolver"
-      # - "traefik.http.routers.ipfs-api.service=ipfs-api"
-      # - "traefik.http.services.ipfs-api.loadbalancer.server.port=5001"
+      - "traefik.http.routers.ipfs-api.entrypoints=websecure"
+      - "traefik.http.routers.ipfs-api.rule=Host(`ipfs-api${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
+      - "traefik.http.routers.ipfs-api.tls.certresolver=myresolver"
+      - "traefik.http.routers.ipfs-api.service=ipfs-api"
+      - "traefik.http.services.ipfs-api.loadbalancer.server.port=5001"
 
       - "traefik.http.routers.ipfs.entrypoints=websecure"
       - "traefik.http.routers.ipfs.rule=Host(`ipfs${SUBDOMAIN_DIVISOR:-.}${APP_HOST}`)"
