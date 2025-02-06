@@ -1,0 +1,15 @@
+http://localhost:80 {
+	# basic_auth {
+	# 	# Username "Bob", password "hiccup"
+	# 	Bob $2a$14$Zkx19XLiW6VYouLHR5NmfOFU0z2GTNmpkT/5qqR7hx4IjWJPDhjvG
+	# }
+	reverse_proxy graph-node:8000
+}
+
+http://localhost:5001 {
+	# basic_auth {
+	# 	# Username "Bob", password "hiccup"
+	# 	Bob $2a$14$Zkx19XLiW6VYouLHR5NmfOFU0z2GTNmpkT/5qqR7hx4IjWJPDhjvG
+	# }
+	reverse_proxy ipfs:5001
+}

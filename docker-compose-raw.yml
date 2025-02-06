@@ -1,0 +1,16 @@
+version: "3"
+services:
+  graph-node:
+    ports:
+      - "8000:80" # expose queries as 80
+      # - "8001:8001"
+      - "8020:8020" #expose admin api on 8020
+      # - "8030:8030"
+      # - "8040:8040"
+# ipfs
+# ports:
+#   - "5001:5001"
+
+#postgres
+# ports:
+#   - "5432:5432"
